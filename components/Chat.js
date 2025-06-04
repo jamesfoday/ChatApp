@@ -3,8 +3,10 @@ import { View, Platform, KeyboardAvoidingView } from "react-native";
 import { GiftedChat, InputToolbar } from "react-native-gifted-chat";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { collection, query, orderBy, onSnapshot, addDoc } from "firebase/firestore";
+import MapView from "react-native-maps";
+import CustomActions from "./CustomActions";
 
-export default function Chat({ route, navigation, db, isConnected }) {
+export default function Chat({ route, navigation, db, storage, isConnected }) {
     const { name, bgColor, userID } = route.params;
     const [messages, setMessages] = useState([]);
 
@@ -56,11 +58,49 @@ export default function Chat({ route, navigation, db, isConnected }) {
         if (isConnected) {
             addDoc(collection(db, "messages"), newMessages[0]);
         }
+        // For immediate UI feedback (adds locally, then syncs if online)
+        setMessages(previousMessages => GiftedChat.append(previousMessages, newMessages));
     }, [db, isConnected]);
 
     // Show/hide input bar based on connection
     const renderInputToolbar = (props) => {
         if (isConnected) return <InputToolbar {...props} />;
+        return null;
+    };
+
+    // [NEW] Show "+" button (with all features)
+    const renderCustomActions = (props) => (
+        <CustomActions
+            storage={storage}
+            userID={userID}
+            onSend={onSend}
+            {...props}
+        />
+    );
+
+    // Render a map in chat bubble if the message has location data
+    const renderCustomView = (props) => {
+        const { currentMessage } = props;
+        if (currentMessage.location) {
+            return (
+                <MapView
+                    style={{
+                        width: 150,
+                        height: 100,
+                        borderRadius: 13,
+                        margin: 3,
+                    }}
+                    region={{
+                        latitude: currentMessage.location.latitude,
+                        longitude: currentMessage.location.longitude,
+                        latitudeDelta: 0.0922,
+                        longitudeDelta: 0.0421,
+                    }}
+                    scrollEnabled={false}
+                    zoomEnabled={false}
+                />
+            );
+        }
         return null;
     };
 
@@ -74,7 +114,8 @@ export default function Chat({ route, navigation, db, isConnected }) {
                     name: name,
                 }}
                 renderInputToolbar={renderInputToolbar}
-            // Add other GiftedChat props as needed
+                renderActions={renderCustomActions}   // Add actions menu
+                renderCustomView={renderCustomView}   // Add custom map bubble
             />
             {Platform.OS === "android" ? <KeyboardAvoidingView behavior="height" /> : null}
             {Platform.OS === "ios" ? <KeyboardAvoidingView behavior="padding" /> : null}
