@@ -18,7 +18,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyB70lo-Ee5zxTcydEjLgfFPgCNNOkHJqXc",
   authDomain: "chatt-3e031.firebaseapp.com",
   projectId: "chatt-3e031",
-  storageBucket: "chatt-3e031.appspot.com",
+  storageBucket: "chatt-3e031.firebasestorage.app",
   messagingSenderId: "38071780629",
   appId: "1:38071780629:web:302309e1df934c7122551c"
 };
